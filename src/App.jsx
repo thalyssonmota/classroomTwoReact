@@ -1,6 +1,8 @@
 import { useState } from "react";
+import { ToastContainer, toast } from 'react-toastify';
 import BackCard from "./components/BackCard";
 import CardFront from "./components/FrontCard";
+import instance from "./api/instance";
 
 export default function App() {
   const [nome, setNome] = useState("")
@@ -10,23 +12,52 @@ export default function App() {
   const [CVV, setCvv] = useState(0);
   const [senha, setSenha] = useState("");
 
-  function pagar(params) {
-    console.log(nome);
-    console.log(numero);
-    console.log(mes);
-    console.log(ano);
-    console.log(CVV);
-    console.log(senha);
+  async function pagar() {
+    if (!nome || !numero || !mes || !ano || !CVV || !senha) {
+      return toast.error("Preencha todos os campos!")
+    }
+    if (numero.length !== 16) {
+      return toast.error("Número do cartão inválido!")
+    }
+    if (CVV.length !== 3) {
+      return toast.error("CVV inválido!")
+    }
+    if (mes > 12 || mes < 1) {
+      return toast.error("Ano de expiração inválido!")
+    }
+    if (ano.length !== 2) {
+      return toast.error("Data de expedição inválida!")
+    }
+    if (senha.length < 4) {
+      return toast.error("Senha inválida!")
+    }
 
+    try {
+      const response = await instance.post("/creditcards", {
+        name: nome,
+        number: numero,
+        expiration: `${mes}/${ano}`,
+        cvv: CVV,
+        password: senha
+      })
 
-
-
-
-
+      return toast.success("Pagamento realizado com sucesso!")
+    }
+    catch (error) {
+      return toast.error("Erro ao processar o pagamento!")
+    }
 
   }
+
   return (
     <div className="w-full h-screen flex">
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        theme="colored"
+        closeOnClick
+        pauseOnFocusLoss
+      />
 
       <div className="w-[40%] h-full bg-[#271540] relative">
         <div className="absolute top-10 left-40">
@@ -37,7 +68,6 @@ export default function App() {
           <BackCard />
         </div>
       </div>
-
 
       <div className="w-[60%] h-full flex flex-col items-end p-[40px]">
         <h1 className="text-[45px] w-[70%] font-bold font-sans h-150px">Preencha os campos para concluir o pagamento!</h1>
@@ -111,7 +141,6 @@ export default function App() {
         </div>
 
       </div>
-
 
     </div>
   )
